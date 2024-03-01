@@ -12,7 +12,7 @@ app = Flask(__name__)
 app.config['MAIL_SERVER'] = 'support@predictram.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'support'
+app.config['MAIL_USERNAME'] = 'support@predictram.com'
 app.config['MAIL_PASSWORD'] = 'Singh@54812'
 
 mail = Mail(app)
@@ -51,25 +51,13 @@ if st.button("Submit"):
         for key, value in form_data.items():
             file.write(f"{key}: {value}\n")
 
+    # Store the unique link in Streamlit app state
+    st.session_state.unique_link = unique_link
+
     # Send email with the unique link
     subject = "Stock Form Submission"
-    body = f"Thank you for submitting the stock form. Click the link to confirm: {request.url_root}confirm/{quote_plus(unique_link)}"
+    body = f"Thank you for submitting the stock form. Click the link to confirm: {'http://localhost:8501/confirm/' + quote_plus(unique_link)}"
     msg = Message(subject, recipients=[user_email], body=body)
     mail.send(msg)
 
     st.success("Form submitted successfully. Check your email to confirm.")
-
-# Flask routes
-@app.route('/confirm/<unique_link>')
-def confirm_submission(unique_link):
-    filename = f"{unique_link}.txt"
-    if os.path.exists(filename):
-        os.remove(filename)
-        return "Content received. Thank you!", 200
-    else:
-        return "Content pending. Invalid link.", 404
-
-if __name__ == "__main__":
-    # Run Flask app in the background
-    import threading
-    threading.Thread(target=app.run, kwargs={'port': 8501}).start()
