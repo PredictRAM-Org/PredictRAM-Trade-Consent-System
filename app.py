@@ -45,7 +45,7 @@ if st.button("Generate Unique Link"):
     unique_link = generate_unique_link(user_data)
 
     # Display the unique link to the user
-    st.success(f"Unique Link Generated: {'https://predictram-trade-consent-system.streamlit.app/confirm/' + quote_plus(unique_link)}")
+    st.success(f"Unique Link Generated: https://predictram-trade-consent-system.streamlit.app/confirm/{quote_plus(unique_link)}")
 
 # Admin section to check the status of links
 st.header("Admin Section")
