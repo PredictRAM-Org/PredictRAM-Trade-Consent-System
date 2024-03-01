@@ -1,24 +1,10 @@
 # app.py
 import streamlit as st
 import os
-import random
-from flask import Flask, request
+from flask import Flask, request, render_template
 from urllib.parse import quote_plus
 
 app = Flask(__name__)
-
-# Generate a unique link
-def generate_unique_link(user_data):
-    characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    unique_link = ''.join(random.choice(characters) for i in range(20))
-
-    # Save the user data to a file with the unique link
-    filename = f"{unique_link}.txt"
-    with open(filename, 'w') as file:
-        for key, value in user_data.items():
-            file.write(f"{key}: {value}\n")
-
-    return unique_link
 
 # Streamlit app
 st.title("Stock Form")
@@ -42,10 +28,10 @@ if st.button("Generate Unique Link"):
     }
 
     # Generate a unique link
-    unique_link = generate_unique_link(user_data)
+    unique_link = quote_plus(request.url_root + f"confirm/{generate_unique_link(user_data)}")
 
     # Display the unique link to the user
-    st.success(f"Unique Link Generated: https://predictram-trade-consent-system.streamlit.app/confirm/{quote_plus(unique_link)}")
+    st.success(f"Unique Link Generated: {unique_link}")
 
 # Admin section to check the status of links
 st.header("Admin Section")
@@ -59,3 +45,30 @@ if st.button("Check Status"):
             st.success(f"User Data:\n{user_data}")
     except FileNotFoundError:
         st.error("Invalid Unique Link. No data found.")
+
+
+# Flask routes
+@app.route('/confirm/<unique_link>', methods=['GET', 'POST'])
+def confirm_submission(unique_link):
+    filename = f"{unique_link}.txt"
+
+    if request.method == 'GET':
+        if os.path.exists(filename):
+            with open(filename, 'r') as file:
+                user_data = file.read()
+                return render_template('confirm.html', user_data=user_data, unique_link=unique_link)
+        else:
+            return "Invalid Link", 404
+
+    elif request.method == 'POST':
+        status = request.form.get('status')
+        result_filename = f"{unique_link}_result.txt"
+
+        with open(result_filename, 'w') as result_file:
+            result_file.write(f"Status: {status}")
+
+        return "Result recorded successfully"
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
