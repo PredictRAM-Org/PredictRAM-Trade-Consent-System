@@ -2,13 +2,10 @@
 import streamlit as st
 import os
 import random
-from flask import Flask, request, jsonify
 from urllib.parse import quote_plus
 
-app = Flask(__name__)
-
 # Generate a unique link
-def generate_unique_link(user_data):
+def generate_unique_link(user_data, root_url):
     characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
     unique_link = ''.join(random.choice(characters) for i in range(20))
 
@@ -18,7 +15,7 @@ def generate_unique_link(user_data):
         for key, value in user_data.items():
             file.write(f"{key}: {value}\n")
 
-    return unique_link
+    return quote_plus(root_url + f"/confirm/{unique_link}")
 
 # Streamlit app
 st.title("Stock Form")
@@ -41,9 +38,11 @@ if st.button("Generate Unique Link"):
         "Target": target,
     }
 
+    # Set the root URL for the Flask server
+    root_url = "https://predictram-trade-consent-system.streamlit.app"
+
     # Generate a unique link
-    with app.app_context():
-        unique_link = quote_plus(request.url_root + f"confirm/{generate_unique_link(user_data)}")
+    unique_link = generate_unique_link(user_data, root_url)
 
     # Display the unique link to the user
     st.success(f"Unique Link Generated: {unique_link}")
@@ -54,8 +53,7 @@ st.header("Admin Section")
 admin_link = st.text_input("Enter Unique Link:")
 if st.button("Check Status"):
     try:
-        with app.app_context():
-            response = jsonify(requests.post(f"https://predictram-trade-consent-system.streamlit.app/confirm/{admin_link}").text)
-            st.success(response)
+        response = st.experimental_get_query_params()["response"][0]  # Retrieve the response parameter
+        st.success(response)
     except FileNotFoundError:
         st.error("Invalid Unique Link. No data found.")
