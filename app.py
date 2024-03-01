@@ -2,7 +2,7 @@
 import streamlit as st
 import os
 import random
-from flask import Flask, request
+from flask import Flask, request, current_app
 from flask_mail import Mail, Message
 from urllib.parse import quote_plus
 
@@ -55,9 +55,10 @@ if st.button("Submit"):
     st.session_state.unique_link = unique_link
 
     # Send email with the unique link
-    subject = "Stock Form Submission"
-    body = f"Thank you for submitting the stock form. Click the link to confirm: {'http://localhost:8501/confirm/' + quote_plus(unique_link)}"
-    msg = Message(subject, recipients=[user_email], body=body)
-    mail.send(msg)
+    with app.app_context():
+        subject = "Stock Form Submission"
+        body = f"Thank you for submitting the stock form. Click the link to confirm: {'http://localhost:8501/confirm/' + quote_plus(unique_link)}"
+        msg = Message(subject, recipients=[user_email], body=body)
+        mail.send(msg)
 
     st.success("Form submitted successfully. Check your email to confirm.")
